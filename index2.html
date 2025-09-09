@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CyberSec URL Threat Detector</title>
+
+<style>
+  /* Reset */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+  body {
+    background: #000a0a;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+    user-select: none;
+    cursor: none; /* hide default cursor */
+  }
+
+  /* Cursor */
+  .cursor, .cursor-trail {
+    position: fixed;
+    top: 0; left: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  .cursor {
+    width: 16px;
+    height: 16px;
+    background: #00ff00;
+    box-shadow: 0 0 12px 3px #00ff00cc;
+    transition: width 0.15s ease, height 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .cursor-trail {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #00ff00aa;
+    opacity: 0.3;
+  }
+
+  .cursor.hover {
+    width: 32px;
+    height: 32px;
+    box-shadow: 0 0 25px 8px #00ff00ee;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 10px, #00440033 11px, #00440033 12px),
+      repeating-linear-gradient(90deg, transparent, transparent 10px, #00440033 11px, #00440033 12px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00ff00cc;
+  }
+
+  p.subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+    font-weight: 300;
+    color: #0f8f0f;
+  }
+
+  /* Form */
+  form {
+    display: flex;
+    width: 600px;
+    max-width: 90vw;
+    border: 2px solid #00ff00;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #001200;
+    box-shadow: 0 0 20px #00ff00aa;
+    transition: box-shadow 0.3s ease;
+  }
+
+  form:hover {
+    box-shadow: 0 0 35px #00ff00dd;
+  }
+
+  input[type="url"] {
+    flex-grow: 1;
+    padding: 15px 20px;
+    background: #002200;
+    color: #00ff00;
+    border: none;
+    font-size: 1.1rem;
+    outline: none;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  input[type="url"]::placeholder {
+    color: #004400;
+  }
+
+  button {
+    background: #004400;
+    border: none;
+    color: #00ff00;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 25px;
+    font-size: 1.2rem;
+    transition: background 0.3s ease;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  button:hover {
+    background: #00ff00;
+    color: #001200;
+  }
+
+  /* Spinner */
+  .spinner {
+    border: 4px solid rgba(0,255,0,0.3);
+    border-top: 4px solid #00ff00;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+
+  /* Result */
+  #result {
+    margin-top: 50px;
+    padding: 30px 40px;
+    border-radius: 20px;
+    font-size: 1.8rem;
+    min-width: 320px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 0 20px #00ff00cc;
+    background: #002200;
+    letter-spacing: 0.05em;
+  }
+
+  .safe {
+    border: 2px solid #4caf50;
+    color: #4caf50;
+    text-shadow: 0 0 6px #4caf50;
+  }
+  .defacement {
+    border: 2px solid #ff9800;
+    color: #ff9800;
+    text-shadow: 0 0 6px #ff9800;
+  }
+  .malware {
+    border: 2px solid #f44336;
+    color: #f44336;
+    text-shadow: 0 0 6px #f44336;
+  }
+  .phishing {
+    border: 2px solid #9c27b0;
+    color: #9c27b0;
+    text-shadow: 0 0 6px #9c27b0;
+  }
+
+  /* Explanation */
+  #explanation {
+    margin-top: 60px;
+    max-width: 700px;
+    text-align: left;
+    line-height: 1.6;
+    font-size: 1.05rem;
+    border-left: 4px solid #00ff00;
+    padding-left: 20px;
+    user-select: text;
+  }
+
+  #explanation h2 {
+    margin-bottom: 15px;
+    text-shadow: 0 0 8px #00ff00aa;
+  }
+
+  #explanation ul {
+    list-style-type: none;
+    padding-left: 20px;
+  }
+  #explanation ul li {
+    margin-bottom: 12px;
+    position: relative;
+  }
+  #explanation ul li::before {
+    content: "▶";
+    position: absolute;
+    left: -18px;
+    color: #00ff00aa;
+    font-size: 0.8rem;
+    top: 3px;
+  }
+  #explanation ul ul li::before {
+    content: "•";
+    color: #00ff00cc;
+    left: -14px;
+    top: 5px;
+  }
+</style>
+</head>
+<body>
+
+  <h1>CyberSec URL Threat Detector</h1>
+  <p class="subtitle">Scan URLs for defacement, malware, and phishing threats instantly.</p>
+
+  <form id="urlForm">
+    <input
+      type="url"
+      id="urlInput"
+      placeholder="Enter URL starting with http:// or https://"
+      required
+      pattern="https?://.+"
+      title="Enter a valid URL"
+      autocomplete="off"
+    />
+    <button type="submit" id="submitBtn">Detect</button>
+  </form>
+
+  <div id="result" style="display:none"></div>
+
+  <section id="explanation">
+    <h2>Project Overview & Architecture</h2>
+    <ul>
+      <li>Frontend (This Page)
+        <ul>
+          <li>HTML/CSS/JS interface</li>
+          <li>Custom cyberpunk cursor & animations</li>
+          <li>Form input & validation</li>
+          <li>Fetch API calls backend</li>
+          <li>Dynamic result display with animations</li>
+        </ul>
+      </li>
+      <li>Backend (FastAPI)
+        <ul>
+          <li>URL input preprocessing</li>
+          <li>Binary classification model - safe vs threat</li>
+          <li>Multi-class classification - threat category</li>
+          <li>Returns JSON response with result</li>
+        </ul>
+      </li>
+      <li>Machine Learning Models
+        <ul>
+          <li>Pretrained models loaded on startup</li>
+          <li>Use features extracted from URL string</li>
+          <li>Output safe / defacement / malware / phishing</li>
+        </ul>
+      </li>
+      <li>Technologies Used
+        <ul>
+          <li>Python (FastAPI, Pydantic)</li>
+          <li>Machine Learning (Custom Models)</li>
+          <li>Frontend: Vanilla JS, CSS animations</li>
+          <li>HTTP API (JSON)</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Custom cursors -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-trail" id="cursorTrail"></div>
+
+<script>
+  // Cursor elements
+  const cursor = document.getElementById('cursor');
+  const cursorTrail = document.getElementById('cursorTrail');
+
+  let mouseX = 0, mouseY = 0;
+  let trailX = 0, trailY = 0;
+
+  // Update mouse position
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    cursor.style.left = mouseX + 'px';
+    cursor.style.top = mouseY + 'px';
+  });
+
+  // Smooth trailing effect
+  function animateTrail() {
+    trailX += (mouseX - trailX) * 0.15;
+    trailY += (mouseY - trailY) * 0.15;
+    cursorTrail.style.left = trailX + 'px';
+    cursorTrail.style.top = trailY + 'px';
+    requestAnimationFrame(animateTrail);
+  }
+  animateTrail();
+
+  // Enlarge cursor on hover for inputs and buttons
+  const hoverTargets = [...document.querySelectorAll('button, input')];
+  hoverTargets.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('hover');
+      cursorTrail.style.opacity = '0.7';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('hover');
+      cursorTrail.style.opacity = '0.3';
+    });
+  });
+
+  // API call & form handling
+  const form = document.getElementById('urlForm');
+  const input = document.getElementById('urlInput');
+  const resultBox = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Basic input validation (pattern already set)
+    if (!input.checkValidity()) {
+      alert("Please enter a valid URL starting with http:// or https://");
+      return;
+    }
+
+    // Show loading spinner
+    resultBox.style.display = 'block';
+    resultBox.className = '';
+    resultBox.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Detecting...';
+
+    // Show spinner next to button
+    const spinner = document.createElement('span');
+    spinner.className = 'spinner';
+    submitBtn.appendChild(spinner);
+
+    try {
+      const response = await fetch('/prediction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: input.value }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Handle different response types
+      let message = '';
+      let className = '';
+
+      if (data.result === 'Safe') {
+        message = "✅ This URL is Safe.";
+        className = 'safe';
+      } else if (typeof data.result === 'object') {
+        // If backend sends object like {0:"defacement"} etc
+        const key = Object.keys(data.result)[0];
+        const value = data.result[key];
+        message = `⚠️ Threat Detected: ${value.charAt(0).toUpperCase() + value.slice(1)}`;
+        className = value.toLowerCase();
+      } else if (typeof data.result === 'string') {
+        message = data.result; // fallback
+      }
+
+      resultBox.textContent = message;
+      resultBox.className = className;
+
+    } catch (err) {
+      resultBox.textContent = "❌ Error: " + err.message;
+      resultBox.className = '';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Detect';
+    }
+  });
+</script>
+
+</body>
+</html>

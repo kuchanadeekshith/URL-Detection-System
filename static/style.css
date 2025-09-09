@@ -1,0 +1,77 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.container {
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    z-index: 10;
+}
+
+h1 {
+    font-size: 2.5em;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+p {
+    font-size: 1.2em;
+}
+input {
+    padding: 10px;
+    font-size: 1em;
+    width: 400px;
+    background: black;
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    outline: none;
+    transition: box-shadow 0.3s ease;
+}
+
+input:focus {
+    background-color: black;
+    color: #00ff00;
+    outline: none;
+    border: 1px solid #00ff00;
+    box-shadow: 0 0 8px #00ff00;
+}
+
+
+button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    font-size: 1em;
+    background-color: #00ff00;
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.popup {
+    margin-top: 20px;
+    display: none;
+    background-color: #000000cc;
+    padding: 20px;
+    border: 1px solid #00ff00;
+    width: fit-content;
+    animation: popup 0.3s ease-in-out;
+}
+
+@keyframes popup {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
