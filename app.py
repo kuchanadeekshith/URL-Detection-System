@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
-
+from fastapi.responses import HTMLResponse
 
 def ResultCategories(result):
     result=int(result)
@@ -21,9 +21,18 @@ app=FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/")
+
+@app.get("/", response_class=HTMLResponse)
 def serve_home():
-    return FileResponse(os.path.join("static", "index.html"))
+    file_path = os.path.join(os.getcwd(), "static", "index.html")
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<h1>URL Detection System is running!</h1>"
+
+@app.head("/")
+def health_check():
+    return {}
 
 @app.on_event("startup")
 def load_models():
